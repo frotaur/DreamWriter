@@ -1,13 +1,15 @@
 import pynput.keyboard as kb
 import datetime
-
-
+from util import dream_to_json, load_keys
+import requests,json
+from claude_dream import ClaudeDreamCorrection
  # TODO : Solve the problem of suppressing shift and CAPS. Ideally,
  # Supress everything except for shift and caps, but that seems hard!
  
 class KeyCorder():
     """
         Class handling the starting of recording, recording, and stopping of recording.
+        Also uploads the recorded dream to Notion.
     """
     def __init__(self):
         self.recording = False
@@ -16,8 +18,19 @@ class KeyCorder():
 
         self.enters_in_a_row = 0
         self.esc_in_a_row = 0
-        self.kb_control = kb.Controller()
+        
+        notion, database, claude = load_keys('keys.env')
+        self.DATABASE_KEY = database
 
+        self.claudector = ClaudeDreamCorrection(api_key=claude)
+
+        self.notion_headers = {
+        "Authorization": f"Bearer {notion}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28" }
+
+        self.notion_url = "https://api.notion.com/v1/pages"
+        self.claude_url = ""
 
     def on_press(self, key):
         if self.recording:
@@ -65,18 +78,26 @@ class KeyCorder():
     def on_release(self, key):
         if key == kb.Key.shift:
             self.shift_pressed = False
-
-    def should_suppress(self, key):
-        return key not in {kb.Key.shift, kb.Key.shift_r, kb.Key.caps_lock}
     
     def start_listening(self):
-        with kb.Listener(on_press=self.on_press, on_release=self.on_release, suppress=self.should_suppress) as listener:
+        with kb.Listener(on_press=self.on_press, on_release=self.on_release, suppress=False) as listener:
             listener.join()
 
     def save_dream(self):
         print('Saving dream...')    
-        with open('dream.txt', 'a') as f:
-            datestamp = '\n\nDREAM, {} : \n\n\n\n'.format(datetime.datetime.now())
-            f.write(datestamp+''.join(self.keystrokes))
+        dream_text = ''.join(self.keystrokes)
+
+        claude_response = self.claudector.correct_and_title(dream_text)
+        claude_text = claude_response['dream_text']
+        dream_title = claude_response['dream_title']
+
+        data = dream_to_json(dream_title=dream_title, dream_claude=claude_text, dream_original=dream_text, database_id=self.DATABASE_KEY)
+        response = requests.post(self.notion_url, headers=self.notion_headers, data=json.dumps(data))
+    
+        if response.status_code == 200:
+            print("Successfully added dream to Notion!")
+        else:
+            print(f"Failed to add dream. Status code: {response.status_code}")
+            print(response.text)
 
         self.keystrokes = []
