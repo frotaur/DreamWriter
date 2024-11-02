@@ -21,7 +21,7 @@ def _get_children(text, block_type='paragraph'):
         }
     }
 
-def dream_to_json(dream_title, dream_claude, dream_original, database_id):
+def dream_to_json(dream_title, dream_claude, dream_original, emoji, database_id):
     """
         Given a dream title, a dream text and a database ID, returns a JSON object to be sent to Notion.
         
@@ -41,7 +41,10 @@ def dream_to_json(dream_title, dream_claude, dream_original, database_id):
                             "content": dream_title
                         }
                     }
-                ]
+                ],
+                "icon": {
+                    "emoji": emoji
+                }
             },
             "Date": {
                 "date": {

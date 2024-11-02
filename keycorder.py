@@ -44,10 +44,11 @@ class KeyCorder():
                 self.keystrokes.append(' ')
             else:
                 try:
-                    if self.shift_pressed:
-                        self.keystrokes.append(key.char.upper())
-                    else:
-                        self.keystrokes.append(key.char)
+                    if(key.char is not None):
+                        if self.shift_pressed:
+                            self.keystrokes.append(key.char.upper())
+                        else:
+                            self.keystrokes.append(key.char)
                 except AttributeError:
                     pass # Key is not a character
             
@@ -80,7 +81,7 @@ class KeyCorder():
             self.shift_pressed = False
     
     def start_listening(self):
-        with kb.Listener(on_press=self.on_press, on_release=self.on_release, suppress=False) as listener:
+        with kb.Listener(on_press=self.on_press, on_release=self.on_release, suppress=True) as listener:
             listener.join()
 
     def save_dream(self):
