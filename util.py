@@ -33,6 +33,9 @@ def dream_to_json(dream_title, dream_claude, dream_original, emoji, database_id)
     """
     return {
         "parent": { "database_id": database_id },
+        "icon": {
+        "emoji": emoji
+        },
         "properties": {
             "Name": {
                 "title": [
@@ -41,10 +44,7 @@ def dream_to_json(dream_title, dream_claude, dream_original, emoji, database_id)
                             "content": dream_title
                         }
                     }
-                ],
-                "icon": {
-                    "emoji": emoji
-                }
+                ]
             },
             "Date": {
                 "date": {

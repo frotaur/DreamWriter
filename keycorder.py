@@ -11,7 +11,7 @@ class KeyCorder():
         Class handling the starting of recording, recording, and stopping of recording.
         Also uploads the recorded dream to Notion.
     """
-    def __init__(self):
+    def __init__(self, keys_file='keys.env'):
         self.recording = False
         self.keystrokes = []
         self.shift_pressed = False
@@ -19,7 +19,7 @@ class KeyCorder():
         self.enters_in_a_row = 0
         self.esc_in_a_row = 0
         
-        notion, database, claude = load_keys('keys.env')
+        notion, database, claude = load_keys(keys_file)
         self.DATABASE_KEY = database
 
         self.claudector = ClaudeDreamCorrection(api_key=claude)
@@ -91,8 +91,9 @@ class KeyCorder():
         claude_response = self.claudector.correct_and_title(dream_text)
         claude_text = claude_response['dream_text']
         dream_title = claude_response['dream_title']
+        emoji = claude_response['dream_emoji']
 
-        data = dream_to_json(dream_title=dream_title, dream_claude=claude_text, dream_original=dream_text, database_id=self.DATABASE_KEY)
+        data = dream_to_json(dream_title=dream_title, dream_claude=claude_text, dream_original=dream_text, emoji=emoji,database_id=self.DATABASE_KEY)
         response = requests.post(self.notion_url, headers=self.notion_headers, data=json.dumps(data))
     
         if response.status_code == 200:
