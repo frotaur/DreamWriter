@@ -4,3 +4,4 @@ __pycache__
 .env
 keys
 mykeys.env
+logs
