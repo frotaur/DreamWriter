@@ -21,6 +21,45 @@ def _get_children(text, block_type='paragraph'):
         }
     }
 
+def _text_to_paragraphs(text, max_length=2000):
+    """
+    Split text by newlines and create Notion paragraph blocks.
+    Also handles the 2000 char limit per paragraph.
+    """
+    paragraphs = text.split('\n')
+    blocks = []
+    
+    for para in paragraphs:
+        para = para.strip()
+        if not para:  # Skip empty paragraphs
+            continue
+            
+        # If paragraph is too long, split it
+        if len(para) <= max_length:
+            blocks.append(_get_children(para))
+        else:
+            # Split long paragraph into chunks at sentence boundaries
+            chunks = []
+            current = ""
+            sentences = para.replace('. ', '.|').split('|')  # Keep periods
+            
+            for sentence in sentences:
+                if len(current) + len(sentence) <= max_length:
+                    current += sentence
+                else:
+                    if current:
+                        chunks.append(current.strip())
+                    current = sentence
+            
+            if current:
+                chunks.append(current.strip())
+            
+            # Add all chunks as separate paragraphs
+            for chunk in chunks:
+                blocks.append(_get_children(chunk))
+    
+    return blocks
+
 def dream_to_json(dream_title, dream_claude, dream_original, emoji, database_id):
     """
         Given a dream title, a dream text and a database ID, returns a JSON object to be sent to Notion.
@@ -54,9 +93,9 @@ def dream_to_json(dream_title, dream_claude, dream_original, emoji, database_id)
         },
         "children": [
             _get_children('Claude-Treated : ', 'heading_2'),
-            _get_children(dream_claude),
+            *_text_to_paragraphs(dream_claude),
             _get_children('Original : ', 'heading_2'),
-            _get_children(dream_original)
+            *_text_to_paragraphs(dream_original)
         ]
     }
 

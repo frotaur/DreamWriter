@@ -13,7 +13,7 @@ class ClaudeDreamCorrection():
     
     def _request_dict(self, dream_text):
         return dict(
-            model="claude-3-5-sonnet-20240620",
+            model="claude-sonnet-4-5",
             max_tokens=2000,
             temperature=0,
             system=self.system,
@@ -26,6 +26,10 @@ class ClaudeDreamCorrection():
                             "text": dream_text
                         }
                     ]
+                },
+                {
+                    "role": "assistant",
+                    "content": "{"
                 }
             ]
         )
@@ -42,10 +46,10 @@ class ClaudeDreamCorrection():
         """
         response = self.client.messages.create(**self._request_dict(dream_text))
         for_logging.log('---------- CLAUDE RAW RESPONSE ----------')
-        for_logging.log(response.content[0].text)
+        for_logging.log('{'+response.content[0].text)
         for_logging.log('------------------------------------------')
         try:
-            return json.loads(response.content[0].text)
+            return json.loads('{'+response.content[0].text)
         except json.JSONDecodeError:
             for_logging.log('Error in Claude response, not valid JSON.')
             return {'dream_title': 'Claude_Error', 'dream_text':response.content[0].text, 'dream_emoji': '🤖'}
